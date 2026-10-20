@@ -1,0 +1,48 @@
+# Secrets and local settings
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+*.p12
+secrets.*
+*credentials*.json
+*service-account*.json
+databricks.cfg
+.databrickscfg
+
+# Local working material that is not part of the project
+working-notes/
+
+# Data never goes into the repository (see docs/data-sources-and-licensing.md)
+data/
+*.zip
+*.csv
+*.parquet
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+spark-warehouse/
+metastore_db/
+derby.log
+
+# Databricks bundle state
+.databricks/
+
+# Bicep build output
+infra/bicep/*.json
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store

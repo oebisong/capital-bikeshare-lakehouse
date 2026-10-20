@@ -1,0 +1,156 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1380 600" width="1380" height="600" role="img" aria-label="Architecture. Trip files and the GBFS feed are fetched over HTTPS by two serverless job tasks, download_trips and collect_gbfs. They write raw files to the landing volume in the bronze schema on ADLS Gen2. A serverless Lakeflow Declarative Pipeline loads the files with Auto Loader into bronze streaming tables, builds silver materialized views with quality expectations and quarantine tables, then builds the gold star schema as materialized views. An AI/BI dashboard reads gold through a serverless SQL warehouse. Unity Catalog governs all of it. make up runs Bicep for Azure, a Python SDK script for Unity Catalog and the Databricks bundle for jobs, pipeline and dashboard. GitHub Actions runs lint and tests.">
+<style>
+.bg{fill:#FFFFFF}
+.d-box{fill:#FFFFFF;stroke:#CBD3DC;stroke-width:1.3}
+.d-new{fill:#E2ECF6;stroke:#1D5C96;stroke-width:1.4}
+.d-fill{fill:#EAEFF4;stroke:none}
+.d-region{fill:none;stroke:#1D5C96;stroke-width:1.3;stroke-dasharray:6 4}
+.d-band{fill:#EAEFF4;stroke:#CBD3DC;stroke-width:1}
+.d-br{fill:#FFFFFF;stroke:#98561F;stroke-width:1.4}
+.d-si{fill:#FFFFFF;stroke:#5B6B7B;stroke-width:1.4}
+.d-go{fill:#FFFFFF;stroke:#8F6B0E;stroke-width:1.4}
+.d-qu{fill:#FFFFFF;stroke:#AE3B28;stroke-width:1.3;stroke-dasharray:4 3}
+text{font-family:Helvetica,Arial,sans-serif}
+.d-t{fill:#15202B;font-weight:600;font-size:13.5px}
+.d-st{fill:#566372;font-size:11.5px}
+.d-m{fill:#15202B;font:600 12.5px Menlo,Consolas,monospace}
+.d-mc{fill:#15202B;font:500 11px Menlo,Consolas,monospace}
+.d-cap{fill:#566372;font:600 11px Menlo,Consolas,monospace;letter-spacing:.08em}
+.d-capa{fill:#1D5C96;font:600 11px Menlo,Consolas,monospace;letter-spacing:.08em}
+.d-lbl{fill:#566372;font-size:11px}
+.t-br{fill:#98561F}.t-si{fill:#5B6B7B}.t-go{fill:#8F6B0E}.t-qu{fill:#AE3B28}
+.d-arrow{stroke:#566372;stroke-width:1.4;fill:none}
+.d-head{fill:#566372}
+</style>
+<rect class="bg" x="0" y="0" width="1380" height="600"/>
+
+      <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="d-head" d="M0 0 L10 5 L0 10 z"/></marker></defs>
+
+      <text class="d-cap" x="16" y="30">SOURCES</text>
+      <text class="d-cap" x="196" y="30">ACQUISITION</text>
+      <text class="d-cap" x="406" y="30">LANDING</text>
+      <text class="d-cap" x="1236" y="30">CONSUMPTION</text>
+      <rect class="d-box" x="16" y="96" width="150" height="108" rx="6"/>
+      <text class="d-t" x="30" y="124">Trip history</text>
+      <text class="d-st" x="30" y="146">Monthly CSV files</text>
+      <text class="d-st" x="30" y="163">zipped, over HTTPS</text>
+      <text class="d-st" x="30" y="180">public, no key</text>
+
+      <rect class="d-box" x="16" y="246" width="150" height="108" rx="6"/>
+      <text class="d-t" x="30" y="274">GBFS feed</text>
+      <text class="d-mc" x="30" y="296">station_status</text>
+      <text class="d-mc" x="30" y="313">station_information</text>
+      <text class="d-st" x="30" y="333">JSON snapshots</text>
+
+      <line class="d-arrow" x1="166" y1="150" x2="194" y2="150" marker-end="url(#ar)"/>
+      <line class="d-arrow" x1="166" y1="300" x2="194" y2="300" marker-end="url(#ar)"/>
+      <text class="d-capa" x="196" y="62">LAKEFLOW JOBS · SERVERLESS</text>
+      <rect class="d-new" x="196" y="96" width="180" height="108" rx="6"/>
+      <text class="d-m" x="210" y="124">download_trips</text>
+      <text class="d-st" x="210" y="146">first task of the</text>
+      <text class="d-st" x="210" y="163">lakehouse_pipeline job</text>
+      <text class="d-st" x="210" y="180">months set in config</text>
+
+      <rect class="d-new" x="196" y="246" width="180" height="108" rx="6"/>
+      <text class="d-m" x="210" y="274">collect_gbfs</text>
+      <text class="d-st" x="210" y="296">gbfs_collection job</text>
+      <text class="d-st" x="210" y="313">every 15 minutes</text>
+      <text class="d-st" x="210" y="330">pause with make</text>
+
+      <line class="d-arrow" x1="376" y1="150" x2="404" y2="150" marker-end="url(#ar)"/>
+      <line class="d-arrow" x1="376" y1="300" x2="404" y2="300" marker-end="url(#ar)"/>
+      <rect class="d-br" x="406" y="96" width="160" height="258" rx="6"/>
+      <text class="d-t" x="420" y="124">Landing volume</text>
+      <text class="d-mc t-br" x="420" y="144">bronze.landing</text>
+      <text class="d-st" x="420" y="164">external volume</text>
+      <text class="d-st" x="420" y="181">on ADLS Gen2</text>
+      <rect class="d-fill" x="420" y="196" width="132" height="24" rx="4"/>
+      <text class="d-mc" x="428" y="212">trips/</text>
+      <rect class="d-fill" x="420" y="288" width="132" height="24" rx="4"/>
+      <text class="d-mc" x="428" y="304">gbfs/</text>
+      <text class="d-st" x="420" y="336">raw files are kept</text>
+      <rect class="d-region" x="590" y="44" width="620" height="340" rx="8"/>
+      <text class="d-capa" x="606" y="62">LAKEFLOW DECLARATIVE PIPELINE · SERVERLESS</text>
+
+      <line class="d-arrow" x1="566" y1="150" x2="614" y2="150" marker-end="url(#ar)"/>
+      <line class="d-arrow" x1="566" y1="300" x2="614" y2="300" marker-end="url(#ar)"/>
+      <text class="d-t t-br" x="616" y="92">Bronze</text>
+      <text class="d-st" x="616" y="108">streaming tables</text>
+      <text class="d-st" x="616" y="123">loaded by Auto Loader</text>
+      <rect class="d-br" x="616" y="134" width="176" height="32" rx="5"/>
+      <text class="d-mc" x="626" y="154">trips_raw</text>
+      <rect class="d-br" x="616" y="266" width="176" height="32" rx="5"/>
+      <text class="d-mc" x="626" y="286">station_status_raw</text>
+      <rect class="d-br" x="616" y="306" width="176" height="32" rx="5"/>
+      <text class="d-mc" x="626" y="326">station_information_raw</text>
+
+      <line class="d-arrow" x1="792" y1="150" x2="810" y2="150" marker-end="url(#ar)"/>
+      <line class="d-arrow" x1="792" y1="300" x2="810" y2="300" marker-end="url(#ar)"/>
+      <text class="d-t t-si" x="812" y="92">Silver</text>
+      <text class="d-st" x="812" y="108">materialized views</text>
+      <rect class="d-si" x="812" y="134" width="176" height="32" rx="5"/>
+      <text class="d-mc" x="822" y="154">trips</text>
+      <rect class="d-qu" x="812" y="174" width="176" height="32" rx="5"/>
+      <text class="d-mc t-qu" x="822" y="194">quarantine.trips</text>
+      <rect class="d-si" x="812" y="266" width="176" height="32" rx="5"/>
+      <text class="d-mc" x="822" y="286">station_status</text>
+      <rect class="d-si" x="812" y="306" width="176" height="32" rx="5"/>
+      <text class="d-mc" x="822" y="326">station_information</text>
+
+      <line class="d-arrow" x1="988" y1="150" x2="1006" y2="150" marker-end="url(#ar)"/>
+      <line class="d-arrow" x1="988" y1="300" x2="1006" y2="300" marker-end="url(#ar)"/>
+      <text class="d-t t-go" x="1008" y="92">Gold</text>
+      <text class="d-st" x="1008" y="108">materialized views</text>
+      <rect class="d-go" x="1008" y="134" width="190" height="32" rx="5"/>
+      <text class="d-mc" x="1018" y="154">fact_trips</text>
+      <rect class="d-go" x="1008" y="174" width="190" height="32" rx="5"/>
+      <text class="d-mc" x="1018" y="194">dim_date</text>
+      <rect class="d-go" x="1008" y="214" width="190" height="32" rx="5"/>
+      <text class="d-mc" x="1018" y="234">dim_station</text>
+      <rect class="d-go" x="1008" y="266" width="190" height="32" rx="5"/>
+      <text class="d-mc" x="1018" y="286">fact_station_availability</text>
+
+      <text class="d-lbl t-qu" x="606" y="370">Silver rules send every failing row to the quarantine schema, with the reasons attached.</text>
+
+      <line class="d-arrow" x1="1198" y1="225" x2="1234" y2="225" marker-end="url(#ar)"/>
+      <rect class="d-new" x="1236" y="96" width="130" height="258" rx="6"/>
+      <text class="d-t" x="1250" y="124">AI/BI</text>
+      <text class="d-t" x="1250" y="142">dashboard</text>
+      <text class="d-st" x="1250" y="166">reads gold through</text>
+      <text class="d-st" x="1250" y="183">a serverless SQL</text>
+      <text class="d-st" x="1250" y="200">warehouse</text>
+      <rect class="d-band" x="406" y="400" width="960" height="34" rx="6"/>
+      <text class="d-cap" x="420" y="421">UNITY CATALOG</text>
+      <text class="d-lbl" x="540" y="421">One catalog with schemas bronze, silver, quarantine and gold. Least-privilege grants per group. ride_id is masked in silver.</text>
+      <text class="d-cap" x="16" y="470">DEPLOYMENT</text>
+      <rect class="d-new" x="16" y="482" width="150" height="96" rx="6"/>
+      <text class="d-m" x="91" y="526" text-anchor="middle">make up</text>
+      <text class="d-st" x="91" y="545" text-anchor="middle">reads .env</text>
+      <line class="d-arrow" x1="166" y1="530" x2="194" y2="530" marker-end="url(#ar)"/>
+
+      <rect class="d-box" x="196" y="482" width="300" height="96" rx="6"/>
+      <text class="d-t" x="210" y="506">1 · Bicep for Azure</text>
+      <text class="d-st" x="210" y="528">Data group holds the ADLS Gen2 account</text>
+      <text class="d-st" x="210" y="545">Platform group holds the Premium workspace</text>
+      <text class="d-st" x="210" y="562">and the access connector</text>
+      <line class="d-arrow" x1="496" y1="530" x2="518" y2="530" marker-end="url(#ar)"/>
+
+      <rect class="d-box" x="520" y="482" width="300" height="96" rx="6"/>
+      <text class="d-t" x="534" y="506">2 · Python SDK script</text>
+      <text class="d-st" x="534" y="528">Storage credential and external location</text>
+      <text class="d-st" x="534" y="545">Catalog, schemas and landing volume</text>
+      <text class="d-st" x="534" y="562">Groups and grants</text>
+      <line class="d-arrow" x1="820" y1="530" x2="842" y2="530" marker-end="url(#ar)"/>
+
+      <rect class="d-box" x="844" y="482" width="300" height="96" rx="6"/>
+      <text class="d-t" x="858" y="506">3 · Databricks bundle</text>
+      <text class="d-st" x="858" y="528">Wheel built from src/</text>
+      <text class="d-st" x="858" y="545">Both jobs and the declarative pipeline</text>
+      <text class="d-st" x="858" y="562">SQL warehouse and dashboard</text>
+
+      <rect class="d-box" x="1168" y="482" width="198" height="96" rx="6"/>
+      <text class="d-t" x="1182" y="506">GitHub Actions</text>
+      <text class="d-st" x="1182" y="528">Lint and unit tests</text>
+      <text class="d-st" x="1182" y="545">on every push</text>
+      <text class="d-st" x="1182" y="562">No cloud access needed</text>
+    </svg>

@@ -1,0 +1,21 @@
+resources:
+  pipelines:
+    # Bronze streaming tables, silver and gold materialized views, and the
+    # quarantine tables, all in one serverless pipeline. Tables are written to
+    # the schema named in each definition.
+    lakehouse:
+      name: bikeshare_lakehouse
+      catalog: ${var.catalog}
+      schema: bronze
+      serverless: true
+      continuous: false
+      channel: CURRENT
+      # root_path is added to sys.path, so the pipeline imports the tested
+      # transformation code from src/bikeshare_lakehouse.
+      root_path: ../src
+      libraries:
+        - glob:
+            include: ../src/pipelines/**
+      configuration:
+        catalog: ${var.catalog}
+        landing_path: ${var.landing_volume_path}

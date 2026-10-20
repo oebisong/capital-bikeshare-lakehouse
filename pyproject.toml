@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bikeshare-lakehouse"
+version = "1.0.0"
+description = "Databricks lakehouse for Capital Bikeshare trip history and GBFS station availability"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+# pyspark and databricks-sdk are provided by Databricks serverless compute.
+dependencies = [
+    "requests>=2.31",
+]
+
+[project.optional-dependencies]
+dev = [
+    "build>=1.2",
+    "databricks-sdk>=0.60",
+    "pre-commit>=3.7",
+    "pyspark>=4.0,<4.2",
+    "pytest>=8.2",
+    "ruff>=0.6",
+]
+
+[project.scripts]
+download-trips = "bikeshare_lakehouse.collectors.trips:main"
+collect-gbfs = "bikeshare_lakehouse.collectors.gbfs:main"
+create-governance-functions = "bikeshare_lakehouse.governance.functions:main"
+run-quality-checks = "bikeshare_lakehouse.quality.checks:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["bikeshare_lakehouse*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests", "scripts"]
+extend-exclude = ["working-notes", "data"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "PL"]
+# PLC0415: Databricks and Spark imports are deferred so the collectors and
+# tests run without them installed.
+ignore = ["PLR0913", "PLR2004", "PLC0415"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/pipelines/*.py" = ["F821"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+markers = ["spark: tests that start a local Spark session"]

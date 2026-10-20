@@ -1,0 +1,50 @@
+# Databricks bundle for the Capital Bikeshare lakehouse.
+#
+# The bundle deploys what runs: two jobs, one declarative pipeline, a SQL
+# warehouse and the dashboard. Unity Catalog objects are created beforehand by
+# scripts/unity_catalog.py. Every variable is set by the Makefile from
+# config/project.env and .env through BUNDLE_VAR_<name> environment variables.
+
+bundle:
+  name: bikeshare_lakehouse
+
+include:
+  - resources/*.yml
+
+artifacts:
+  bikeshare_lakehouse:
+    type: whl
+    path: .
+    build: .venv/bin/python -m build --wheel --outdir dist
+    # A new version on every deploy, so serverless compute never reuses a cached wheel.
+    dynamic_version: true
+
+variables:
+  catalog:
+    description: Unity Catalog catalog for every table
+  landing_volume_path:
+    description: Landing volume path, /Volumes/<catalog>/bronze/<volume>
+  trip_months:
+    description: Comma separated months to download, as YYYY-MM
+  trip_base_url:
+    description: Base URL of the published monthly trip archives
+  gbfs_discovery_url:
+    description: GBFS discovery file that lists the feed URLs
+  gbfs_feeds:
+    description: Comma separated GBFS feeds to collect
+  gbfs_poll_minutes:
+    description: Minutes between GBFS polls
+  gbfs_schedule_status:
+    description: UNPAUSED or PAUSED
+  pipeline_schedule_status:
+    description: UNPAUSED or PAUSED
+  timezone:
+    description: Time zone for schedules
+  alert_email:
+    description: Address that receives job failure emails
+  engineers_group:
+    description: Group that sees unmasked ride IDs
+
+targets:
+  default:
+    default: true

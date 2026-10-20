@@ -1,0 +1,999 @@
+{
+  "datasets": [
+    {
+      "name": "trip_period",
+      "displayName": "Trip period",
+      "queryLines": [
+        "SELECT min(trip_date) AS first_day, max(trip_date) AS last_day, sum(trips) AS trips,\n",
+        "       round(sum(trips) / count(DISTINCT trip_date), 0) AS trips_per_day\n",
+        "FROM agg_daily_ridership\n"
+      ]
+    },
+    {
+      "name": "daily_trips",
+      "displayName": "Daily trips",
+      "queryLines": [
+        "SELECT trip_date, member_type, sum(trips) AS trips\n",
+        "FROM agg_daily_ridership GROUP BY ALL\n"
+      ]
+    },
+    {
+      "name": "weekday_trips",
+      "displayName": "Trips by day of week",
+      "queryLines": [
+        "SELECT concat(day_of_week, ' ', left(day_name, 3)) AS day, member_type,\n",
+        "       sum(trips) AS trips\n",
+        "FROM agg_daily_ridership GROUP BY ALL\n"
+      ]
+    },
+    {
+      "name": "rider_mix",
+      "displayName": "Trips by rider and bike type",
+      "queryLines": [
+        "SELECT member_type, rideable_type, sum(trips) AS trips\n",
+        "FROM agg_daily_ridership GROUP BY ALL\n"
+      ]
+    },
+    {
+      "name": "hourly_demand",
+      "displayName": "Hourly demand",
+      "queryLines": [
+        "SELECT hour_of_day, day_type, sum(avg_departures_per_day) AS avg_departures_per_day\n",
+        "FROM agg_hourly_station_demand GROUP BY ALL\n"
+      ]
+    },
+    {
+      "name": "top_departures",
+      "displayName": "Busiest departure stations",
+      "queryLines": [
+        "SELECT station_name, sum(departures) AS departures\n",
+        "FROM agg_hourly_station_demand GROUP BY ALL ORDER BY departures DESC LIMIT 15\n"
+      ]
+    },
+    {
+      "name": "top_arrivals",
+      "displayName": "Busiest arrival stations",
+      "queryLines": [
+        "SELECT station_name, sum(arrivals) AS arrivals\n",
+        "FROM agg_hourly_station_demand GROUP BY ALL ORDER BY arrivals DESC LIMIT 15\n"
+      ]
+    },
+    {
+      "name": "monitoring_period",
+      "displayName": "GBFS monitoring period",
+      "queryLines": [
+        "SELECT min(first_observed_at) AS first_observation, max(last_observed_at) AS latest_observation,\n",
+        "       sum(observations) AS observations, count(*) AS stations\n",
+        "FROM agg_station_availability\n"
+      ]
+    },
+    {
+      "name": "empty_stations",
+      "displayName": "Stations most often observed empty",
+      "queryLines": [
+        "SELECT station_name, round(100 * empty_rate, 1) AS empty_pct, observations\n",
+        "FROM agg_station_availability WHERE observations >= 20\n",
+        "ORDER BY empty_rate DESC LIMIT 15\n"
+      ]
+    },
+    {
+      "name": "full_stations",
+      "displayName": "Stations most often observed full",
+      "queryLines": [
+        "SELECT station_name, round(100 * full_rate, 1) AS full_pct, observations\n",
+        "FROM agg_station_availability WHERE observations >= 20\n",
+        "ORDER BY full_rate DESC LIMIT 15\n"
+      ]
+    },
+    {
+      "name": "availability_by_hour",
+      "displayName": "Availability by hour",
+      "queryLines": [
+        "SELECT hour_of_day, day_type, round(100 * empty_rate, 1) AS empty_pct,\n",
+        "       round(100 * full_rate, 1) AS full_pct\n",
+        "FROM agg_availability_by_hour\n"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "ridership",
+      "displayName": "Historical ridership",
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layout": [
+        {
+          "widget": {
+            "name": "ridership_header",
+            "multilineTextboxSpec": {
+              "lines": [
+                "## Historical trip period",
+                "Completed trips from the monthly files Capital Bikeshare publishes. These dates do not overlap the GBFS monitoring period."
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 6,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "trips_total",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "trip_period",
+                  "fields": [
+                    {
+                      "name": "trips",
+                      "expression": "`trips`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "trips",
+                  "displayName": "Trips"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Trips"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 2,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "first_day",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "trip_period",
+                  "fields": [
+                    {
+                      "name": "first_day",
+                      "expression": "`first_day`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "first_day",
+                  "displayName": "First day"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "First day"
+              }
+            }
+          },
+          "position": {
+            "x": 2,
+            "y": 2,
+            "width": 2,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "last_day",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "trip_period",
+                  "fields": [
+                    {
+                      "name": "last_day",
+                      "expression": "`last_day`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "last_day",
+                  "displayName": "Last day"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Last day"
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 2,
+            "width": 2,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "daily_trips_chart",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "daily_trips",
+                  "fields": [
+                    {
+                      "name": "trip_date",
+                      "expression": "`trip_date`"
+                    },
+                    {
+                      "name": "trips",
+                      "expression": "`trips`"
+                    },
+                    {
+                      "name": "member_type",
+                      "expression": "`member_type`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "trip_date",
+                  "scale": {
+                    "type": "temporal"
+                  },
+                  "displayName": "Date"
+                },
+                "y": {
+                  "fieldName": "trips",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Trips"
+                },
+                "color": {
+                  "fieldName": "member_type",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "Rider type"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Daily trips"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 5,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "weekday_chart",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "weekday_trips",
+                  "fields": [
+                    {
+                      "name": "day",
+                      "expression": "`day`"
+                    },
+                    {
+                      "name": "trips",
+                      "expression": "`trips`"
+                    },
+                    {
+                      "name": "member_type",
+                      "expression": "`member_type`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "day",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "Day"
+                },
+                "y": {
+                  "fieldName": "trips",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Trips"
+                },
+                "color": {
+                  "fieldName": "member_type",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "Rider type"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Trips by day of week"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 11,
+            "width": 3,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "hourly_chart",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "hourly_demand",
+                  "fields": [
+                    {
+                      "name": "hour_of_day",
+                      "expression": "`hour_of_day`"
+                    },
+                    {
+                      "name": "avg_departures_per_day",
+                      "expression": "`avg_departures_per_day`"
+                    },
+                    {
+                      "name": "day_type",
+                      "expression": "`day_type`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "hour_of_day",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Hour of day"
+                },
+                "y": {
+                  "fieldName": "avg_departures_per_day",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Departures per day"
+                },
+                "color": {
+                  "fieldName": "day_type",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "Day type"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Average departures per day by hour"
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 11,
+            "width": 3,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "top_departures_chart",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "top_departures",
+                  "fields": [
+                    {
+                      "name": "departures",
+                      "expression": "`departures`"
+                    },
+                    {
+                      "name": "station_name",
+                      "expression": "`station_name`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "departures",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Departures"
+                },
+                "y": {
+                  "fieldName": "station_name",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "Station"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Busiest departure stations"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 17,
+            "width": 3,
+            "height": 8
+          }
+        },
+        {
+          "widget": {
+            "name": "top_arrivals_chart",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "top_arrivals",
+                  "fields": [
+                    {
+                      "name": "arrivals",
+                      "expression": "`arrivals`"
+                    },
+                    {
+                      "name": "station_name",
+                      "expression": "`station_name`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "arrivals",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Arrivals"
+                },
+                "y": {
+                  "fieldName": "station_name",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "Station"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Busiest arrival stations"
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 17,
+            "width": 3,
+            "height": 8
+          }
+        },
+        {
+          "widget": {
+            "name": "rider_mix_chart",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "rider_mix",
+                  "fields": [
+                    {
+                      "name": "member_type",
+                      "expression": "`member_type`"
+                    },
+                    {
+                      "name": "trips",
+                      "expression": "`trips`"
+                    },
+                    {
+                      "name": "rideable_type",
+                      "expression": "`rideable_type`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "member_type",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "Rider type"
+                },
+                "y": {
+                  "fieldName": "trips",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Trips"
+                },
+                "color": {
+                  "fieldName": "rideable_type",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "Bike type"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Trips by rider type and bike type"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 25,
+            "width": 6,
+            "height": 6
+          }
+        }
+      ]
+    },
+    {
+      "name": "availability",
+      "displayName": "Observed availability",
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layout": [
+        {
+          "widget": {
+            "name": "availability_header",
+            "multilineTextboxSpec": {
+              "lines": [
+                "## GBFS monitoring period",
+                "Station snapshots collected every 15 minutes from the live feed. Rates are the share of snapshots that showed a station empty or full. They are observed frequencies, not the share of time."
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 6,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "latest_observation",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "monitoring_period",
+                  "fields": [
+                    {
+                      "name": "latest_observation",
+                      "expression": "`latest_observation`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "latest_observation",
+                  "displayName": "Latest observation"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Latest observation"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 2,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "first_observation",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "monitoring_period",
+                  "fields": [
+                    {
+                      "name": "first_observation",
+                      "expression": "`first_observation`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "first_observation",
+                  "displayName": "First observation"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "First observation"
+              }
+            }
+          },
+          "position": {
+            "x": 2,
+            "y": 2,
+            "width": 2,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "observation_count",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "monitoring_period",
+                  "fields": [
+                    {
+                      "name": "observations",
+                      "expression": "`observations`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "observations",
+                  "displayName": "Station observations"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Station observations"
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 2,
+            "width": 2,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "empty_by_hour",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "availability_by_hour",
+                  "fields": [
+                    {
+                      "name": "hour_of_day",
+                      "expression": "`hour_of_day`"
+                    },
+                    {
+                      "name": "empty_pct",
+                      "expression": "`empty_pct`"
+                    },
+                    {
+                      "name": "day_type",
+                      "expression": "`day_type`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "hour_of_day",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Hour of day"
+                },
+                "y": {
+                  "fieldName": "empty_pct",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Empty %"
+                },
+                "color": {
+                  "fieldName": "day_type",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "Day type"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Share of snapshots with no bikes, by hour"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 5,
+            "width": 3,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "full_by_hour",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "availability_by_hour",
+                  "fields": [
+                    {
+                      "name": "hour_of_day",
+                      "expression": "`hour_of_day`"
+                    },
+                    {
+                      "name": "full_pct",
+                      "expression": "`full_pct`"
+                    },
+                    {
+                      "name": "day_type",
+                      "expression": "`day_type`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "hour_of_day",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Hour of day"
+                },
+                "y": {
+                  "fieldName": "full_pct",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Full %"
+                },
+                "color": {
+                  "fieldName": "day_type",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "Day type"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Share of snapshots with no docks, by hour"
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 5,
+            "width": 3,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "empty_stations_chart",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "empty_stations",
+                  "fields": [
+                    {
+                      "name": "empty_pct",
+                      "expression": "`empty_pct`"
+                    },
+                    {
+                      "name": "station_name",
+                      "expression": "`station_name`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "empty_pct",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Empty %"
+                },
+                "y": {
+                  "fieldName": "station_name",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "Station"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Stations most often observed empty"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 11,
+            "width": 3,
+            "height": 8
+          }
+        },
+        {
+          "widget": {
+            "name": "full_stations_chart",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "full_stations",
+                  "fields": [
+                    {
+                      "name": "full_pct",
+                      "expression": "`full_pct`"
+                    },
+                    {
+                      "name": "station_name",
+                      "expression": "`station_name`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "full_pct",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Full %"
+                },
+                "y": {
+                  "fieldName": "station_name",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "Station"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Stations most often observed full"
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 11,
+            "width": 3,
+            "height": 8
+          }
+        }
+      ]
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "LEFT"
+    }
+  }
+}
