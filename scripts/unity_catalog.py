@@ -8,6 +8,10 @@ is the only reliable way to remove every schema, table and volume in one step.
 This script therefore owns every Unity Catalog object. Each object is created
 only if it is missing, so the script is safe to rerun.
 
+Groups are created in the Databricks account, because Unity Catalog grants
+only accept account groups. The script therefore uses two CLI profiles: the
+workspace profile and an account profile, DATABRICKS_ACCOUNT_PROFILE.
+
 Settings come from environment variables. The Makefile sets them from
 config/project.env, .env and the outputs of the Bicep deployment.
 """
@@ -146,21 +150,43 @@ def with_storage_retry(label: str, action: Callable[[], object]) -> None:
             time.sleep(STORAGE_RETRY_SECONDS)
 
 
-def ensure_group(w, name: str, add_current_user: bool = False) -> None:
+def remove_workspace_local_group(w, name: str) -> None:
+    """Delete a workspace-local group of this name.
+
+    Unity Catalog only accepts account groups as principals, and a local group
+    with the same name blocks the account group from being assigned.
+    """
+    for group in w.groups.list(filter=f'displayName eq "{name}"', attributes="id,meta"):
+        if group.meta and group.meta.resource_type == "WorkspaceGroup":
+            w.groups.delete(group.id)
+            logger.info("Deleted workspace-local group %s", name)
+
+
+def ensure_group(w, a, name: str, add_current_user: bool = False) -> None:
+    """Create the account group, assign it to the workspace and add the caller."""
     from databricks.sdk.service import iam
 
-    existing = list(w.groups.list(filter=f'displayName eq "{name}"', attributes="id,displayName"))
-    group = existing[0] if existing else w.groups.create(display_name=name)
-    if not existing:
-        logger.info("Created group %s", name)
+    remove_workspace_local_group(w, name)
+    existing = list(a.groups.list(filter=f'displayName eq "{name}"', attributes="id,displayName"))
+    group = existing[0] if existing else a.groups.create(display_name=name)
+    logger.info("%s account group %s", "Found" if existing else "Created", name)
+
+    a.workspace_assignment.update(
+        workspace_id=w.get_workspace_id(),
+        principal_id=int(group.id),
+        permissions=[iam.WorkspacePermission.USER],
+    )
+    logger.info("Assigned %s to the workspace", name)
+
     if add_current_user:
-        me = w.current_user.me()
-        w.groups.patch(
+        user_name = w.current_user.me().user_name
+        user = next(iter(a.users.list(filter=f'userName eq "{user_name}"', attributes="id")))
+        a.groups.patch(
             group.id,
-            operations=[iam.Patch(op=iam.PatchOp.ADD, path="members", value=[{"value": me.id}])],
+            operations=[iam.Patch(op=iam.PatchOp.ADD, path="members", value=[{"value": user.id}])],
             schemas=[iam.PatchSchema.URN_IETF_PARAMS_SCIM_API_MESSAGES_2_0_PATCH_OP],
         )
-        logger.info("Added %s to %s", me.user_name, name)
+        logger.info("Added %s to %s", user_name, name)
 
 
 def apply_grants(w, s: Settings) -> None:
@@ -179,7 +205,7 @@ def apply_grants(w, s: Settings) -> None:
         logger.info("Granted %s on %s to %s", ", ".join(g.privileges), g.full_name, g.principal)
 
 
-def up(w, s: Settings) -> None:
+def up(w, a, s: Settings) -> None:
     from databricks.sdk.service import catalog as uc
 
     ensure(
@@ -240,13 +266,13 @@ def up(w, s: Settings) -> None:
         ),
     )
 
-    ensure_group(w, s.engineers_group, add_current_user=True)
-    ensure_group(w, s.analysts_group)
-    ensure_group(w, s.viewers_group)
+    ensure_group(w, a, s.engineers_group, add_current_user=True)
+    ensure_group(w, a, s.analysts_group)
+    ensure_group(w, a, s.viewers_group)
     apply_grants(w, s)
 
 
-def down(w, s: Settings) -> None:
+def down(w, a, s: Settings) -> None:
     """Remove the catalog and its storage objects.
 
     The landing volume is external, so its files stay in the storage account.
@@ -274,9 +300,10 @@ def down(w, s: Settings) -> None:
             logger.info("%s does not exist", label)
 
     for name in (s.engineers_group, s.analysts_group, s.viewers_group):
-        for group in w.groups.list(filter=f'displayName eq "{name}"', attributes="id"):
-            w.groups.delete(group.id)
-            logger.info("Deleted group %s", name)
+        remove_workspace_local_group(w, name)
+        for group in a.groups.list(filter=f'displayName eq "{name}"', attributes="id"):
+            a.groups.delete(group.id)
+            logger.info("Deleted account group %s", name)
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -285,11 +312,16 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("action", choices=["up", "down"])
     args = parser.parse_args(argv if argv is not None else sys.argv[1:])
 
-    from databricks.sdk import WorkspaceClient
+    from databricks.sdk import AccountClient, WorkspaceClient
 
     settings = Settings.from_env(os.environ)
+    account_profile = os.environ.get("DATABRICKS_ACCOUNT_PROFILE")
+    if not account_profile:
+        raise SystemExit("Set DATABRICKS_ACCOUNT_PROFILE. Run make databricks-account-login first.")
     workspace = WorkspaceClient()
-    up(workspace, settings) if args.action == "up" else down(workspace, settings)
+    account = AccountClient(profile=account_profile)
+    action = up if args.action == "up" else down
+    action(workspace, account, settings)
 
 
 if __name__ == "__main__":

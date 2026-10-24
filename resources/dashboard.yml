@@ -1,6 +1,6 @@
 resources:
   sql_warehouses:
-    bikeshare:
+    bikeshare_warehouse:
       name: bikeshare-lakehouse
       warehouse_type: PRO
       enable_serverless_compute: true
@@ -13,7 +13,7 @@ resources:
     bikeshare:
       display_name: Capital Bikeshare Lakehouse
       file_path: ../dashboards/bikeshare_lakehouse.lvdash.json
-      warehouse_id: ${resources.sql_warehouses.bikeshare.id}
+      warehouse_id: ${resources.sql_warehouses.bikeshare_warehouse.id}
       # Dataset queries use unqualified table names and resolve here.
       dataset_catalog: ${var.catalog}
       dataset_schema: gold

@@ -246,6 +246,9 @@ found in the real data and how each was handled.
 
 - An Azure subscription where you can create resource groups and role
   assignments. Owner on the subscription covers both.
+- Account admin in the Databricks account, to create the account groups. A
+  Global Administrator of the Microsoft Entra tenant becomes one on first
+  sign-in to the account console.
 - [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli),
   [Databricks CLI](https://docs.databricks.com/dev-tools/cli/install.html) and
   [GitHub CLI](https://cli.github.com/) (optional).
@@ -291,7 +294,8 @@ make up         # Azure, Unity Catalog, bundle, first GBFS snapshot, first pipel
 | `make preflight` | Checks the subscription and region and registers the resource providers |
 | `make infra-up` | Shows the Bicep what-if result, then deploys the resource groups, storage account, workspace and access connector |
 | `make databricks-login` | Opens the browser to sign in to the new workspace |
-| `make catalog-up` | Creates the storage credential, external location, catalog, schemas, landing volume, groups and grants |
+| `make databricks-account-login` | Saves a Databricks account console profile that signs in through your `az login` session. Unity Catalog groups are account groups, so this needs an account admin |
+| `make catalog-up` | Creates the storage credential, external location, catalog, schemas and landing volume, then the account groups, their workspace assignment and the grants |
 | `make deploy` | Builds the Python wheel and deploys the jobs, pipeline, SQL warehouse and dashboard |
 | `make collect-now` | Collects one GBFS snapshot |
 | `make run` | Runs `lakehouse_pipeline` once |

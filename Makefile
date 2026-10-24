@@ -27,6 +27,10 @@ JAVA_HOME ?= $(shell brew --prefix openjdk@17 2>/dev/null)/libexec/openjdk.jdk/C
 # The Databricks CLI and SDK both read this profile.
 DATABRICKS_CONFIG_PROFILE := $(DATABRICKS_PROFILE)
 
+# Account console profile. Unity Catalog groups are account groups.
+ACCOUNT_HOST := https://accounts.azuredatabricks.net
+DATABRICKS_ACCOUNT_PROFILE := $(DATABRICKS_PROFILE)-account
+
 LANDING_VOLUME_PATH := /Volumes/$(CATALOG)/bronze/$(LANDING_VOLUME)
 
 # Bundle variables (see databricks.yml)
@@ -44,7 +48,8 @@ BUNDLE_VAR_alert_email := $(ALERT_EMAIL)
 BUNDLE_VAR_engineers_group := $(ENGINEERS_GROUP)
 
 .PHONY: help setup lint format test bicep-check check-env check-azure check-databricks \
-	preflight infra-up infra-outputs databricks-login ensure-databricks-login catalog-up \
+	preflight infra-up infra-outputs databricks-login ensure-databricks-login \
+	databricks-account-login ensure-databricks-account-login catalog-up \
 	deploy run collect-now collect-pause collect-resume up down
 
 help: ## List the targets
@@ -124,6 +129,25 @@ databricks-login: ## Sign in to the workspace and save the CLI profile
 ensure-databricks-login:
 	@databricks current-user me > /dev/null 2>&1 || $(MAKE) --no-print-directory databricks-login
 
+# The account profile reuses the az login session. A browser sign-in to the
+# account console fails for personal Microsoft accounts, because it does not
+# know the tenant. The Azure CLI does.
+databricks-account-login: check-azure check-databricks ## Save the account console profile, signed in through az login
+	@grep -q '^\[$(DATABRICKS_ACCOUNT_PROFILE)\]' ~/.databrickscfg || { \
+		account_id=$$(databricks auth describe --output json | $(BIN)/python -c \
+			'import json, sys; print(json.load(sys.stdin)["details"]["configuration"]["account_id"]["value"])'); \
+		tenant_id=$$(az account show --query tenantId -o tsv); \
+		printf '\n[%s]\nhost            = %s\naccount_id      = %s\nazure_tenant_id = %s\nauth_type       = azure-cli\n' \
+			$(DATABRICKS_ACCOUNT_PROFILE) $(ACCOUNT_HOST) $$account_id $$tenant_id >> ~/.databrickscfg; \
+		echo "Saved profile $(DATABRICKS_ACCOUNT_PROFILE)"; \
+	}
+	@databricks account workspaces list --profile $(DATABRICKS_ACCOUNT_PROFILE) > /dev/null || \
+		{ echo "The account console refused the sign-in. An account admin is required."; exit 1; }
+
+ensure-databricks-account-login:
+	@databricks account workspaces list --profile $(DATABRICKS_ACCOUNT_PROFILE) > /dev/null 2>&1 || \
+		$(MAKE) --no-print-directory databricks-account-login
+
 catalog-up: check-databricks ## Create the Unity Catalog objects, groups and grants
 	$(BIN)/python scripts/unity_catalog.py up
 
@@ -147,6 +171,7 @@ up: ## Build everything from nothing: Azure, Unity Catalog, bundle, first run
 	@$(MAKE) --no-print-directory preflight
 	@$(MAKE) --no-print-directory infra-up
 	@$(MAKE) --no-print-directory ensure-databricks-login
+	@$(MAKE) --no-print-directory ensure-databricks-account-login
 	@$(MAKE) --no-print-directory catalog-up
 	@$(MAKE) --no-print-directory deploy
 	@$(MAKE) --no-print-directory collect-now
